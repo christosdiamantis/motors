@@ -1,0 +1,7 @@
+﻿import {test} from 'node:test';import assert from 'node:assert/strict';import {calculate,example,phaseValues} from '../lib/motor.ts';
+const near=(a:number,b:number,tol=1e-7)=>assert.ok(Math.abs(a-b)<tol,`${a} ≠ ${b}`);
+test('independent complex arithmetic reference, three-phase power and torque',()=>{const r=calculate(example);near(r.r1,4);near(r.req,7.2);near(r.r2,3.2);near(r.x1,1.7435595774162695);near(r.rc,442.083112693161);near(r.xm,116.0499497419416);near(r.ns,1500);near(r.slip,.04);near(r.airGap,1717.167527210616);near(r.rotorCopper,68.68670108842464);near(r.converted,1648.4808261221913);near(r.electromagnetic,10.93182800289825);near(r.rated,9.94718394324346);near(r.torque(0),0)});
+test('star and delta line-to-phase',()=>{let a=phaseValues('star',400,6,900);near(a.voltage,400/Math.sqrt(3));near(a.current,6);near(a.power,300);a=phaseValues('delta',400,6,900);near(a.voltage,400);near(a.current,6/Math.sqrt(3));near(a.power,300)});
+test('invalid measured values are rejected',()=>{for(const change of [{pb:500},{speed:1500},{nb:1},{n0:0},{p0:461},{r:[8,8,8]},{split:1},{poles:3},{frequency:0}])assert.throws(()=>calculate({...example,...change}))});
+test('torque scales with voltage squared at fixed parameters',()=>{const a=calculate(example),b=calculate({...example,ratedVoltage:115});near(b.electromagnetic,a.electromagnetic/4)});
+test('power flow conservation',()=>{const r=calculate(example);near(r.airGap,r.rotorCopper+r.converted);near(r.converted,r.electromagnetic*2*Math.PI*example.speed/60)});
